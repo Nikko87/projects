@@ -1,2 +1,2 @@
-# Meu porftolio
-Este é meu portfolio
+# My portfolio
+This is my portfolio
