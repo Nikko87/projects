@@ -1,0 +1,209 @@
+﻿AppType=JavaFX
+Build1=Default,b4j.example
+File1=fBaixaBoletos.fxml
+File10=fLotes.fxml
+File11=fMain.fxml
+File12=fVenda.fxml
+File2=fBaixaParcelas.fxml
+File3=fBaixaParcelasEmLote.fxml
+File4=fCadBoletos.fxml
+File5=fCliente.fxml
+File6=fDetalhesCliente.fxml
+File7=fLocalizar.fxml
+File8=fLocalizarLote.fxml
+File9=fLoteamento.fxml
+FileGroup1=Default Group
+FileGroup10=Default Group
+FileGroup11=Default Group
+FileGroup12=Default Group
+FileGroup2=Default Group
+FileGroup3=Default Group
+FileGroup4=Default Group
+FileGroup5=Default Group
+FileGroup6=Default Group
+FileGroup7=Default Group
+FileGroup8=Default Group
+FileGroup9=Default Group
+Group=Forms
+Library1=jcore
+Library2=jfx
+Library3=jsql
+Library4=javaobject
+Module1=frmBaixaParcelas
+Module10=Cliente
+Module11=frmCliente
+Module12=frmLocalizar
+Module13=frmLocalizarLote
+Module14=frmLoteamento
+Module15=frmLotes
+Module16=ExtratoBoleto
+Module18=DBDadosDataAccess
+Module2=frmBaixaParcelasEmLote
+Module20=DBUtils
+Module21=Venda
+Module22=DateUtils
+Module3=GeradorParcelas
+Module4=frmVenda
+Module5=frmDetalhesCliente
+Module6=frmCadBoletos
+Module7=frmBaixaBoletos
+Module8=Utils
+Module9=Parcela
+NumberOfFiles=12
+NumberOfLibraries=4
+NumberOfModules=20
+Version=6.3
+@EndOfDesignText@
+#Region Project Attributes 
+	#MainFormWidth: 800
+	#MainFormHeight: 600
+	#AdditionalJar: sqlite-jdbc-3.7.2
+#End Region
+
+Sub Process_Globals
+	Private fx As JFX
+	Private MainForm As Form
+	Private mnuCliente As MenuItem
+	Private mnuLoteamento As MenuItem
+	Private mnuVenda As MenuItem
+	Private mnuLocalizar As MenuItem
+	Private mnuLotes As MenuItem
+	Private btnTeste As Button
+	Private mnuCadBoletos As MenuItem
+	Private mnuBaixaBoletos As MenuItem
+	Private mnuDetalhesCliente As MenuItem
+	Private mnuBaixaParcelas As MenuItem
+	Private tvParcelasVencidas As TableView
+	Private dtVencimento As DatePicker
+	Private btnMostrar As Button
+End Sub
+
+Sub AppStart (Form1 As Form, Args() As String)
+	MainForm = Form1
+	MainForm.RootPane.LoadLayout("fMain") 'Load the layout file.
+	MainForm.Title = "Berrela Empreendimentos"
+	
+	CreateTables
+	
+	dtVencimento.DateTicks = DateTime.Add(DateTime.Now, 0,0,-1)
+	MostraParcelasVencidas
+
+	MainForm.Show
+	
+End Sub
+
+Sub CreateTables
+	Dim db As DBDadosDataAccess
+	db.initialize
+	db.Clientes_CreateTable
+	db.Loteamentos_CreateTable
+	db.Parcelas_CreateTable
+	db.Vendas_CreateTable
+	db.Lotes_CreateTable
+	db.Dispose
+End Sub
+
+'Return true to allow the default exceptions handler to handle the uncaught exception.
+Sub Application_Error (Error As Exception, StackTrace As String) As Boolean
+	Return True
+End Sub
+
+
+Sub mnuLocalizar_Action
+	frmLocalizar.Show("Clientes")
+End Sub
+
+Sub mnuVenda_Action
+	frmVenda.Show
+End Sub
+
+Sub mnuLoteamento_Action
+	frmLoteamento.Show
+End Sub
+
+Sub mnuCliente_Action
+	frmCliente.Show
+End Sub
+
+
+Sub mnuLotes_Action
+	frmLotes.Show
+End Sub
+
+Sub mnuCadBoletos_Action
+	frmCadBoletos.Show
+End Sub
+
+Sub mnuBaixaParcelas_Action
+	frmBaixaParcelas.Show
+End Sub
+
+
+
+#region TESTES
+
+Sub btnTeste_Click
+	'Dim gerador As GeradorParcelas
+	'gerador.Initialize(12,5000, 1000, "2018-02-13", Utils.PAG_ENTRADA_PARCELADO)
+	'MostraParcelasVencidas
+	teste2
+End Sub
+
+
+Sub teste1
+	Dim db As DBDadosDataAccess
+	db.initialize
+	
+	For Each p As Parcela In db.Parcelas_where2("ClienteId = 1", Null)
+		If p.Situacao = 1 Then
+			Log("Parcela paga: " & p.NumParcela)
+		End If
+	Next
+	
+	db.Dispose
+End Sub
+
+Sub teste2
+	Dim db As DBDadosDataAccess
+	db.initialize
+	File.WriteString(File.dirapp, "teste.html", DBUtils.ExecuteHtml(db.SQL, "SELECT * FROM Clientes", Null, 0, True))
+	db.Dispose
+End Sub
+
+
+
+#End Region
+
+Sub mnuBaixaBoletos_Action
+	frmBaixaBoletos.Show
+End Sub
+
+Sub mnuDetalhesCliente_Action
+	frmDetalhesCliente.show(Null)
+	
+End Sub
+
+Sub MostraParcelasVencidas
+	Dim s As String
+	
+	tvParcelasVencidas.Items.Clear
+	
+	Dim db As DBDadosDataAccess
+	db.initialize
+	
+	DateTime.DateFormat = "yyyy-MM-dd"
+	Dim data As String = DateTime.Date(dtVencimento.DateTicks)
+	
+	s = "SELECT NumParcela, DataVencimento, ValorParcela, (SELECT Nome FROM Clientes WHERE Id = ClienteId) As Cliente FROM Parcelas WHERE DataVencimento = ?"
+	DBUtils.ExecuteTableView(db.SQL, s, Array As String(data), 0, tvParcelasVencidas)
+	
+	db.Dispose
+End Sub
+
+Sub dtVencimento_ValueChanged (Value As Long)
+	MostraParcelasVencidas
+End Sub
+
+Sub btnMostrar_Click
+	MostraParcelasVencidas
+End Sub
